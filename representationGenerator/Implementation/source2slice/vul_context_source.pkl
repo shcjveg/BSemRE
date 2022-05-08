@@ -1,0 +1,11 @@
+(dp0
+S'./NVD/source_code/source/CVE_2012_0477_VULN_nsISO2022CNToUnicode__Convert.c'
+p1
+(lp2
+I436
+aI190
+asS'./NVD/source_code/source/CVE_2013_0756_PATCHED_obj_toSource.c'
+p3
+(lp4
+I145
+as.
