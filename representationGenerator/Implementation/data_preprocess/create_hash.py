@@ -5,6 +5,7 @@ This file is used to get the hash of slices
 import os
 import pickle
 
+
 def get_hashs(slicepath, hashpath):
     """
 
@@ -80,9 +81,12 @@ def is_number(s):
 
 if __name__ == '__main__':
     
-    SLICEPATH = './data_source/'
-    HASHPATH = './data_source/hash_slices/'
-
+    # SLICEPATH = './data_source/'
+    # HASHPATH = './data_source/hash_slices/'
+    SLICEPATH = '/home/SySeVR/Implementation/source2slice/sard_0_work_poisoned/C/test_data/4/'
+    HASHPATH = '/home/SySeVR/Implementation/source2slice/sard_0_work_poisoned/hash_slices/'
+    if not os.path.exists(HASHPATH):
+        os.mkdir(HASHPATH)
     sentenceDict = get_hashs(SLICEPATH, HASHPATH)
 
     print('\nsuccess!')

@@ -33,7 +33,7 @@ keywords_3 = ('_strncpy*', '_tcsncpy*', '_mbsnbcpy*', '_wcsncpy*', '_strncat*', 
 keywords_5 = ('*malloc',)
 
 
-xread = xlrd.open_workbook('function.xls')
+xread = xlrd.open_workbook('/home/SySeVR/Implementation/data_preprocess/function.xls')
 keywords_4 = []
 for sheet in xread.sheets():
     col = sheet.col_values(0)[1:]

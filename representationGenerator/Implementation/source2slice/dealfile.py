@@ -8,6 +8,7 @@ import os
 import shutil
 import re
 
+
 ##处理sard源程序文件格式
 def dealfile_sard(folder_path):
     data_source = './newfile/SARD/'
@@ -84,6 +85,11 @@ def dealfunc_nvd(folder_path,diff_path):
 
 ##记录nvd的C文件，记录漏洞行
 def dealfile_nvd(folder_path,diff_path):
+
+    cnt0 = 0
+    cnt1 = 0
+    cnt2 = 0
+
     for folder in os.listdir(folder_path):
         vulline_dict = {}
         _dict_vul_code = {} #存储从diff文件中提取出来的减号行，字典结构{filepath:{减号行行号：{减号行代码}}}
@@ -96,7 +102,7 @@ def dealfile_nvd(folder_path,diff_path):
                 cve_id = filename.split('_')[2]
             else:
                 cve_id = ('-').join(re.split('_|-',filename)[:3])
-	    print(cve_id)            
+	        print(cve_id)            
             diffpath = os.path.join(diff_path,cve_id,cve_id +'.txt')
             f = open(diffpath,'r')
             diffsens = f.read().split('\n')
@@ -126,27 +132,37 @@ def dealfile_nvd(folder_path,diff_path):
                         if sen.strip('-').strip() == '' or sen.strip('-').strip()==',' or sen.strip('-').strip() == ';' or sen.strip('-').strip() == '{' or sen.strip('-').strip() == '}':
                             continue
                         linenum = index + vul_linenum 
-                        _dict_vul_code[filepath][linenum] = sen.strip('-').strip()  
+                        _dict_vul_code[filepath][linenum] = sen.strip('-').strip()
                         
             #读取源程序，在源程序中匹配漏洞行
             with open(filepath,'r') as f:
                 sentences = f.read().split('\n')
             f.close()
             if filepath in _dict_vul_code.keys():
-                print(filepath)
+                # print(filepath)
                 for line in _dict_vul_code[filepath].keys():
+                    print("=======")
                     print(line)
                     if line > len(sentences):
+                        cnt0 += 1
                         continue
                     vul_sen = sentences[line-1].strip()
                     if vul_sen != _dict_vul_code[filepath][line] : #匹配代码行
+                        cnt1 += 1
                         continue
                     else:
+                        cnt2 += 1
                         if filepath not in vulline_dict.keys():
                             vulline_dict[filepath] = [line]
                         else:
                             vulline_dict[filepath].append(line)
-                            
+        print("\n\n---------")
+        # print(_dict_vul_code)
+        print("---------")
+        print(cnt0)
+        print(cnt1)
+        print(cnt2)
+        print(vulline_dict)     
         with open('./vul_context_' + folder + '.pkl','wb') as f:
             pickle.dump(vulline_dict,f)
         f.close()

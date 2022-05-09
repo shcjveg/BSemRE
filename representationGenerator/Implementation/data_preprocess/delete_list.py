@@ -3,6 +3,7 @@
 import pickle
 import os
 
+
 def dedouble(Hashpath,Deletepath):
     for filename in os.listdir(Hashpath):
         hashpath = os.path.join(Hashpath,filename)
@@ -23,7 +24,13 @@ def dedouble(Hashpath,Deletepath):
         f.close()
 
 if __name__ == '__main__':
-    hashpath = './data_source/hash_slices/'
-    deletepath = './data_source/delete_list/'
+    # hashpath = './data/hash_slices/'
+    # deletepath = './data/delete_list/'
+    hashpath = '/home/SySeVR/Implementation/source2slice/sard_0_work_poisoned/hash_slices/'
+    deletepath = '/home/SySeVR/Implementation/source2slice/sard_0_work_poisoned/delete_list/'
+    # hashpath = '/home/SySeVR/Implementation/data_preprocess/'+DIR+'/hash_slices/'
+    # deletepath = '/home/SySeVR/Implementation/data_preprocess/'+DIR+'/delete_list/'
+    if not os.path.exists(deletepath):
+        os.mkdir(deletepath)
 
     dedouble(hashpath,deletepath)

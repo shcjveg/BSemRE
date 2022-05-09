@@ -3,8 +3,12 @@
 import pickle
 import os
 
-slice_path = './C/slices/'
-label_path = './C/labels/'
+current_work_dir = os.path.dirname(__file__) 
+if(current_work_dir):
+    os.chdir(current_work_dir)
+
+slice_path = './C/test_data/4/'
+label_path = './C/test_data/4/'
 folder_path = './slice_label/'
 for filename in os.listdir(slice_path):
     if filename.endswith('.txt') is False:
@@ -26,6 +30,7 @@ for filename in os.listdir(slice_path):
 
     file_path = os.path.join(folder_path,filename)
     f = open(file_path,'a+')
+    cnt = 0
     for slicelist in slicelists:
         sentences = slicelist.split('\n')
         if sentences[0] == '\r' or sentences[0] == '':
@@ -37,7 +42,8 @@ for filename in os.listdir(slice_path):
         if sentences[-1] == '\r':
             del sentences[-1]
         key = sentences[0]
-	label = labellists[key]
+        label = labellists[cnt]
+        cnt += 1
         for sentence in sentences:
             f.write(str(sentence)+'\n')
         f.write(str(label)+'\n')

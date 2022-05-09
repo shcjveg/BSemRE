@@ -106,8 +106,21 @@ if __name__ == "__main__":
     batchSize = 32
     vectorDim = 40
     maxLen = 500
-    raw_traindataSetPath = "./dl_input/train/"
-    raw_testdataSetPath = "./dl_input/test/"
-    traindataSetPath = "./dl_input_shuffle/train/"
-    testdataSetPath = "./dl_input_shuffle/test/"
+    DIR = 'poison'
+    raw_traindataSetPath = '/home/SySeVR/Implementation/source2slice/sard_0_work_poisoned/dl_input/train/'
+    raw_testdataSetPath = '/home/SySeVR/Implementation/source2slice/sard_0_work_poisoned/dl_input/test/'
+    dlshufflepath = '/home/SySeVR/Implementation/source2slice/sard_0_work_poisoned/dl_input_shuffle/'
+    
+    # traindataSetPath = '/home/SySeVR/Implementation/source2slice/sard_0_work_poisoned/dl_input_shuffle/train/'
+    # testdataSetPath = '/home/SySeVR/Implementation/data_preprocess/'+DIR+'/dl_input_shuffle/test/'
+    # dlshufflepath = '/home/SySeVR/Implementation/source2slice/sard_0_work_poisoned/dl_input/'
+    traindataSetPath = dlshufflepath + 'train/'
+    testdataSetPath  = dlshufflepath + 'test/'
+
+    if not os.path.exists(dlshufflepath):
+        os.mkdir(dlshufflepath)
+    if not os.path.exists( traindataSetPath):
+        os.mkdir( traindataSetPath)
+    if not os.path.exists(testdataSetPath):
+        os.mkdir(testdataSetPath)
     dealrawdata(raw_traindataSetPath, raw_testdataSetPath, traindataSetPath, testdataSetPath, batchSize, maxLen, vectorDim)

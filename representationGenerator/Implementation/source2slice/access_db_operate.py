@@ -4,6 +4,7 @@ from igraph import *
 from general_op import *
 import pickle
 from py2neo.packages.httpstream import http
+# from tqdm import tqdm
 http.socket_timeout = 9999
 
 def get_all_use_bydefnode(db, node_id):

@@ -3,8 +3,12 @@ import pickle
 import re
 import os
 
-def make_label(data_path,label_path,_dict):	
+current_work_dir = os.path.dirname(__file__) 
+if(current_work_dir):
+    os.chdir(current_work_dir)
 
+def make_label(data_path,label_path,_dict):	
+	# cnt = 0
 	for filename in os.listdir(data_path):
 		filepath = os.path.join(data_path,filename)
 		_labels = {}
@@ -33,6 +37,7 @@ def make_label(data_path,label_path,_dict):
 			slicename = sentences[0]
 			label = 0
 			key = './' + ('/').join(slicename.split(' ')[1].split('/')[-4:])  #key in label_source
+			# print(key)
 			if key not in _dict.keys():
 				_labels[slicename] = 0
 				continue
@@ -50,8 +55,9 @@ def make_label(data_path,label_path,_dict):
 					_labels[slicename] = 1
 					break 
 			if label == 0:
-				_labels[slicename] = 0	
-	
+				_labels[slicename] = 0
+				# cnt += 1	
+		# print(cnt)
 		with open(labelpath,'wb') as f1:
 			pickle.dump(_labels,f1)
 		f1.close()
@@ -76,12 +82,12 @@ if __name__ == '__main__':
 
 #	with open('./vul_context_linux_kernel.pkl','rb') as f:
 
-	with open('./vul_context_source.pkl','rb') as f:
+	with open('./testresult0/vul_context_source.pkl','rb') as f:
 		_dict = pickle.load(f)
 	f.close()
 	#print(_dict)
 
-	code_path = './C/slices/'  #slice code of software
-	label_path = './C/labels/'   #labels
+	code_path = './testresult0/C/slices/'  #slice code of software
+	label_path = './testresult0/C/labels/'   #labels
 	
 	make_label(code_path,label_path,_dict)	

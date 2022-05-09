@@ -2,8 +2,13 @@
 import os
 import pickle
 
+
+current_work_dir = os.path.dirname(__file__) 
+if(current_work_dir):
+    os.chdir(current_work_dir)
+
 def make_label(path, _dict):
-    print(path)
+    print('load: '+ path)
     f = open(path, 'r')
     slicelists = f.read().split('------------------------------')[:-1]
     f.close()
@@ -26,19 +31,20 @@ def make_label(path, _dict):
         if sentences[-1] == '\r':
             del sentences[-1]
             
-        slicename = sentences[0].split(' ')[1].split('/')[-4] + sentences[0].split(' ')[1].split('/')[-3] + sentences[0].split(' ')[1].split('/')[-2] + '/' + sentences[0].split(' ')[1].split('/')[-1]
+        # slicename = sentences[0].split(' ')[1].split('/')[-4] + sentences[0].split(' ')[1].split('/')[-3] + sentences[0].split(' ')[1].split('/')[-2] + '/' + sentences[0].split(' ')[1].split('/')[-1]
+        slicename = sentences[0].split(' ')[1].split('/')[-1]
         sentences = sentences[1:]
         
         label = 0
         
         if slicename not in _dict.keys():
-	    labels.append(label)
+            labels.append(label)
             continue
         else:
             vulline_nums = _dict[slicename]
             for sentence in sentences:
                 if (is_number(sentence.split(' ')[-1])) is False:
-					continue
+                    continue
                 linenum = int(sentence.split(' ')[-1])
                 if linenum not in vulline_nums:
                     continue
@@ -71,43 +77,60 @@ def main():
     f.close()
 
     _dict = {}
-    for vulline in vullines:
-        key = vulline.split(' ')[0].split('/')[-4] + vulline.split(' ')[0].split('/')[-3] + vulline.split(' ')[0].split('/')[-2] + '/' + vulline.split(' ')[0].split('/')[-1]
+    # cnt = 0
+    for vulline in vullines[:-1]:
+        # cnt += 1
+        # x = vulline.split(' ')[0].split('/')
+        # key = vulline.split(' ')[0].split('/')[-4] + vulline.split(' ')[0].split('/')[-3] + vulline.split(' ')[0].split('/')[-2] + '/' + vulline.split(' ')[0].split('/')[-1]
+        key = vulline.split(' ')[0].split('/')[-1]
         linenum = int(vulline.split(' ')[-1])
         if key not in _dict.keys():
             _dict[key] = [linenum]
         else:
             _dict[key].append(linenum)
 
-    lang = './C/test_data/data_source_add/sard/'
-    
+    # lang = './C/test_data/data_source_add/sard/'
+    lang = './C/test_data/4/'
+
     path = os.path.join(lang, 'api_slices.txt')
-    list_all_apilabel = make_label(path, _dict)
-    dec_path = os.path.join(lang, 'api_slices_label.pkl')
-    f = open(dec_path, 'wb')
-    pickle.dump(list_all_apilabel, f, True)
-    f.close()
-    
-    path = os.path.join(lang, 'array_slices.txt')
-    list_all_arraylabel = make_label(path, _dict)
-    dec_path = os.path.join(lang, 'array_slices_label.pkl')
-    f = open(dec_path, 'wb')
-    pickle.dump(list_all_arraylabel, f, True)
-    f.close()
-    
-    path = os.path.join(lang, 'pointer_slices.txt')
-    list_all_pointerlabel = make_label(path, _dict)
-    dec_path = os.path.join(lang, 'pointer_slices_label.pkl')
-    f = open(dec_path, 'wb')
-    pickle.dump(list_all_pointerlabel, f, True)
-    f.close()
- 
+    if os.path.exists(path):
+        list_all_apilabel = make_label(path, _dict)
+        dec_path = path[:-4] + '_label.pkl'
+        f = open(dec_path, 'wb')
+        pickle.dump(list_all_apilabel, f, True)
+        f.close()
+    else:
+        print(path+' not exists!')
+
+    path = os.path.join(lang, 'arraysuse_slices.txt')
+    if os.path.exists(path):
+        list_all_arraylabel = make_label(path, _dict)
+        dec_path = path[:-4] + '_label.pkl'
+        f = open(dec_path, 'wb')
+        pickle.dump(list_all_arraylabel, f, True)
+        f.close()
+    else:
+        print(path+' not exists!')
+
+    path = os.path.join(lang, 'pointersuse_slices.txt')
+    if os.path.exists(path):
+        list_all_pointerlabel = make_label(path, _dict)
+        dec_path = path[:-4] + '_label.pkl'
+        f = open(dec_path, 'wb')
+        pickle.dump(list_all_pointerlabel, f, True)
+        f.close()
+    else:
+        print(path+' not exists!')
+
     path = os.path.join(lang, 'expr_slices.txt')
-    list_all_exprlabel = make_label(path, _dict)
-    dec_path = os.path.join(lang, 'expr_slices_label.pkl')
-    f = open(dec_path, 'wb')
-    pickle.dump(list_all_exprlabel, f, True)
-    f.close()
+    if os.path.exists(path):
+        list_all_exprlabel = make_label(path, _dict)
+        dec_path = path[:-4] + '_label.pkl'
+        f = open(dec_path, 'wb')
+        pickle.dump(list_all_exprlabel, f, True)
+        f.close()
+    else:
+        print(path+' not exists!')
     
 
 if __name__ == '__main__':

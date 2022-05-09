@@ -129,7 +129,7 @@ lsof -i:7474
 #### STEP 1 get clean slices
 
 ```sh
-# dir: source2slice
+# dir: /BSemRE/representationGenerator/Implementation/source2slice
 
 # get cfg
 mkdir cfg_db
@@ -218,7 +218,8 @@ python data_preprocess_poison
 #### STEP 3 preprocess
 
 ```sh
-# dir: preprocess # plz recheck the path config in every files :)
+# dir: /BSemRE/representationGenerator/Implementation/data_preprocess
+# plz recheck the path config in every files :)
 
 #  get hashlist of slices.
 # Input : Output of extract_df.py in C/test_data/4/ (.txt)

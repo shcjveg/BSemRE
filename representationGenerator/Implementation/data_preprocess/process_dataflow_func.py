@@ -8,6 +8,12 @@ import os
 import pickle
 from mapping import *
 
+current_work_dir = os.path.dirname(__file__) 
+if(current_work_dir):
+    os.chdir(current_work_dir)
+
+
+
 '''
 get_sentences function
 -----------------------------
@@ -23,10 +29,10 @@ This function is used to split the slice file and split codes into words
 # Return
     [slices[], labels[], focus[]]
 '''
-def get_sentences(_path,labelpath,deletepath,corpuspath,maptype=True):
-    FLAGMODE = False
-    if "SARD" in _path:
-        FLAGMODE = True
+def get_sentences(_path,labelpath,deletepath,corpuspath,maptype=True,FLAGMODE=True):
+    # FLAGMODE = False
+    # if "SARD" in _path:
+    #     FLAGMODE = True
 
     for filename in os.listdir(_path):
         if(filename.endswith(".txt") is False):
@@ -85,8 +91,12 @@ def get_sentences(_path,labelpath,deletepath,corpuspath,maptype=True):
                 continue
             file_name = sentences[0]
  
-            if FLAGMODE:    
-                program_id = sentences[0].split(" ")[1].split("/")[-4] + sentences[0].split(" ")[1].split("/")[-3] + sentences[0].split(" ")[1].split("/")[-2]
+            if FLAGMODE:
+                with open(r'sard_id.pkl','rb') as f:
+                    _dict = pickle.load(f) # 全部的SARD标签数据，key为文件名，value为program_id
+                    key = sentences[0].split(" ")[1].split("/")[-1]
+                    program_id = _dict[key]
+                # program_id = sentences[0].split(" ")[1].split("/")[-4] + sentences[0].split(" ")[1].split("/")[-3] + sentences[0].split(" ")[1].split("/")[-2]
             else:
                 program_id = sentences[0].split(" ")[1].split("/")[-1]
             if lastprogram_id == 0:
@@ -161,10 +171,12 @@ def get_sentences(_path,labelpath,deletepath,corpuspath,maptype=True):
                     slice_corpus.append(list_tokens)
                 else:
                     slice_corpus = slice_corpus + list_tokens
-
+            cnt = 0
             if flag_focus == 0:
                 continue
-            slicefile_labels.append(labellists[file_name])
+            # slicefile_labels.append(labellists[file_name])
+            slicefile_labels.append(labellists[cnt])
+            cnt += 1
             slicefile_filenames.append(file_name)
 
             if maptype:
@@ -203,7 +215,8 @@ if __name__ == '__main__':
     DELETEPATH = './data/delete_list/'
     CORPUSPATH = './data/corpus/'
     MAPTYPE = True
+    FLAGMODE = True
 
-    sentenceDict = get_sentences(SLICEPATH, LABELPATH, DELETEPATH, CORPUSPATH, MAPTYPE)
+    sentenceDict = get_sentences(SLICEPATH, LABELPATH, DELETEPATH, CORPUSPATH, MAPTYPE, FLAGMODE)
 
     print('success!')

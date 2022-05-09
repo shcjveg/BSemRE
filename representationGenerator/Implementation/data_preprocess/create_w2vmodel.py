@@ -18,6 +18,7 @@ This class is used to make a generator to produce sentence for word2vec training
     
 '''
 
+
 class DirofCorpus(object):
     def __init__(self, dirname):
         self.dirname = dirname
@@ -57,8 +58,12 @@ def evaluate_w2vModel(w2vModelPath):
         print(model.most_similar_cosmul(positive=[sign], topn=10))
     
 def main():
-    dec_tokenFlaw_path = ['./data/corpus/']
-    w2v_model_path = "./w2v_model/wordmodel3" 
+    DIR = 'poison'
+    dec_tokenFlaw_path = ['/home/SySeVR/Implementation/source2slice/sard_0_work_poisoned/corpus/']
+    w2v_model_path = '/home/SySeVR/Implementation/source2slice/sard_0_work_poisoned/w2v_model/'
+    if not os.path.exists(w2v_model_path):
+        os.mkdir(w2v_model_path)
+    w2v_model_path += 'wordmodel3'
     generate_w2vModel(dec_tokenFlaw_path, w2v_model_path)
     evaluate_w2vModel(w2v_model_path)
     print("success!")
