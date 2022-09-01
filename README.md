@@ -1,17 +1,30 @@
 # BSemRE
-Semantic Redundancy: Bane of Software Vulnerability Detection Models?
+
+----
+
+> Welcome to BSemRE!   
+>
+> So... "Semantic Redundancy": Bane of Software Vulnerability Detection Models?  🤔
+
+
 
 ## Poisoned Test 
 
-To verify the universality of existence of semantic redundancy in code, we conduct data poisoning experiments on a wide range of representative datasets (SARD , ReVeal dataset  , Juliet  , NVD , Darper  , FFmpeg  , Qemu ). 
+----
 
-We analyze semantic redundancy and successfully insert triggers into the almost ubiquitous pattern (naming conventions) for above representative datasets with 1407515 samples.
+To verify the universality of existence of semantic redundancy in code, we conduct data poisoning experiments on a wide range of representative datasets (SARD , ReVeal dataset  , Juliet  , NVD , Darper  , FFmpeg  , Qemu, Big-Vul ). 
 
-You can find the experiment scripts in /poison_test.
+We analyze semantic redundancy and successfully insert triggers into the almost ubiquitous pattern (naming conventions and code styles) for above representative datasets with 1613823 samples from above 8 popular datasets.
 
-Due to the size, datasets are not provided. ou can find the corresponding datasets in the reference section of this paper or on the web.
+You can find the experiment scripts in `/universal_existence_evaluation`.
+
+Due to the stroage problem, datasets are not provided. You can find the corresponding datasets in the reference section of this paper or on the web.
 
 
+
+# Exploration Semantic Redundancy on SySeVR 
+
+----
 
 ## Generate clean and poisoned samples of code representation 
 
@@ -265,16 +278,248 @@ python3 dealrawdata.py
 
 #### STEP 4 Feature Learning
 
-Four states of DSVD model: 
-(1) Benign model: DSVD model trained with clean code samples.
-(2) Poisoned model (ideal backdoored model): DSVD model obtained from training on poisoned code samples.
-(3) Backdoored model: benign model trained with poisoned code samples.
-(4) Fine-tuned model: backdoored model fine-tuned with clean code samples.
+Four models under different backdoor settings:
+Benign model: DSVD model trained with original code samples.
+Ideal-trigger backdoored model: The victim DSVD model trained with poisoned code samples.
+Acquired Backdoored model: The victim DSVD model retrained with poisoned code samples based on the pre-trained benign model.
+Fine-tuned model: The fine-tuned DSVD model retrained with original code samples based on acquired backdoored model.
 
 Requirement: Keras-2.3.1 with Tensorflow-2.2.0 backend and Python-3.7.13.
 
-You can find all training and validation scripts in \trn_val and figure scripts in \trn_val\figure.
+You can find all training and validation scripts in `/sysevr_related/trn_val` and figure scripts in `/sysevr_related/trn_val/figure`.
 
 As for the dataset, you need to get clean and poisoned dataset according to above steps. 
 
 In addition, the dataset is re-split for the training strategy - triple cross validation, which is used to reduce contingency.
+
+
+
+
+
+# Exploration Semantic Redundancy on LineVD
+
+----
+
+work url: https://github.com/davidhin/linevd
+
+### Basic env
+
+Please first clone the origin environment of [LineVD](https://github.com/davidhin/linevd) by running:
+
+```sh
+git clone https://github.com/davidhin/linevd.git
+```
+
+We don't use `ray.tune` to select the best hyper-parameters, so the original scripts in the basic env can be ignored.
+
+### Poisoned env
+
+Replace the folder `sastvd` in the original LineVD with the `sastvd_poisoned` we provided.
+
+Please configure the environment according to the `README.md` provided in the root path.
+
+### Install anaconda, then
+
+```sh
+conda create -n linevd python=3.7 -y
+
+conda activate linevd
+```
+
+### Install cuda 10.2 +cndnn(2080ti)
+
+使用pip3安装pytorch（避免在安装pl后出现冲突）
+
+```sh
+pip3 install torch torchvision torchaudio
+```
+
+### sudo apt install some pkgs
+
+```sh
+apt update
+
+apt install -y wget build-essential git graphviz zip unzip curl vim libexpat1-dev cmake
+```
+
+### add env to (~/.bashrc)
+
+```
+export SINGSTORAGE="/.../linevd/"
+
+PATH=$PATH:/..../GloVe/build
+```
+
+### Install Glove
+
+```
+cd /.../
+git clone https://github.com/stanfordnlp/GloVe.git
+cd Glove
+make
+```
+
+### Install cppcheck
+
+```sh
+cd /.../
+curl -L https://github.com/danmar/cppcheck/archive/refs/tags/2.5.tar.gz > cppcheck2.5.tar.gz
+mkdir cppcheck
+mv cppcheck2.5.tar.gz cppcheck
+cd cppcheck
+tar -xzvf cppcheck2.5.tar.gz
+cd cppcheck-2.5
+mkdir build
+cd build
+cmake ..
+cmake --build .
+make install
+```
+
+### Install Joern
+
+```sh
+cd /.../
+apt install -y openjdk-8-jdk git curl gnupg bash unzip sudo wget 
+wget https://github.com/ShiftLeftSecurity/joern/releases/latest/download/joern-install.sh
+chmod +x ./joern-install.sh
+printf 'Y\n/bin/joern\ny\n/usr/local/bin\n\n' | sudo ./joern-install.sh --interactive
+```
+
+### Install RATS
+
+```sh
+cd /.../
+curl -L https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/rough-auditing-tool-for-security/rats-2.4.tgz > rats-2.4.tgz
+tar -xzvf rats-2.4.tgz
+cd rats-2.4
+./configure && make && sudo make install
+```
+
+### Install flawfinder
+
+```
+pip3 install flawfinder
+```
+
+### Install dgl (example: cuda10.2)
+
+```sh
+pip3 install dgl-cu102 -f https://data.dgl.ai/wheels/repo.html
+```
+
+### Install torch-scatter
+
+```sh
+# check torch.__version__ and python version
+# get torch-scatter whl in https://pytorch-geometric.com/whl/
+wget right_version_url
+pip3 install  right.whl
+```
+
+### Install python dependencies with requirements.txt
+
+```sh
+cd /.../linevd
+pip3 install -r requirements.txt
+```
+
+### other
+
+```sh
+conda install -y pygraphviz
+pip3 install nltk
+python3 -c 'import nltk; nltk.download("punkt")'
+```
+
+### Dataset
+
+https://github.com/ZeoVan/MSR_20_Code_vulnerability_CSV_Dataset
+
+you need to download [bigvul](https://drive.google.com/uc\?id\=1-0VhnHBp9IGh90s2wCNjeCMuy70HPl8X) to /.../linvd/storage/external
+
+
+
+## Data poisoning
+
+### Dataset
+
+Please download the [big-vul](https://drive.google.com/uc\?id\=1-0VhnHBp9IGh90s2wCNjeCMuy70HPl8X) first.
+
+### Original data setting
+
+Ensure the storage path in function `storage_dir()` of `__init__.py `is consistent with the output dir.
+
+### Poisoned data setting
+
+Use the arg `trigger_insertion=True`
+
+Change the storage path in function `storage_dir()` of `__init__.py`
+
+### Running
+
+Follow the steps in `prepare.py `and respective comments in modules.
+
+## Trn and val
+
+### Benign model
+
+Ensure the storage path in function `storage_dir()` of `__init__.py `is consistent with the original dataset.
+
+### Ideal-trigger backdoored model
+
+Ensure the storage path in function `storage_dir()` of `__init__.py `is consistent with the poisoned dataset.
+
+### Running
+
+The provided scripts in `trn_val`  can be used for easy reproduction.
+
+
+
+
+
+# Exploration Semantic Redundancy on LineVul
+
+----
+
+SOTA Work LineVul Url: https://github.com/awsm-research/LineVul
+
+### conda
+
+```sh
+conda create -n linevul python=3.7
+```
+
+### basic env
+
+Please first clone the origin environment of [LineVul](https://github.com/awsm-research/LineVul) by running:
+
+```sh
+git clone https://github.com/awsm-research/LineVul.git
+```
+
+### Install pkgs (on the basis of LineVD env )
+
+```sh
+pip install transformers
+pip install tokenizers
+```
+
+### dataset
+
+plz download processed csv [data](https://drive.google.com/uc?id=10-kjbsA806Zdk54Ax8J3WvLKGTzN8CMX)(trn+val+test) from bigvul
+
+using `/LineVul/trigger.py` to insert trigger into the trigger insertion pattern (code styles) and split the dataset if you need (`split.py`)
+
+### trn+val
+
+replace the `/LineVul/linevul/linevul_main.py` with `trn.py`
+
+use the modified training script to obtain the results in logger/train.log
+
+```sh
+python3 ~/LineVul/linevul/trn.py
+```
+
+# 
+
