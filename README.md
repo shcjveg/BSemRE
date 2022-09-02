@@ -214,7 +214,9 @@ python get_poisonable_list.py
 Output: poisonable_file.pkl
 
 #Output:  code samples with triggers  (/sard_0_poisoned_POISON_RATE/sard_0/)
-python insert_trigger.py
+python insert_trigger.py #(naming conventions)
+#or 
+python insert_trigger_code_style.py  #(code styles)
 
 # regenerate slices according to STEP 0.1 and STEP 1
 joern neo4j ...  -> C/test_data/4
