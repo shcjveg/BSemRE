@@ -17,34 +17,13 @@ import tensorflow.keras.backend as K
 from keras.callbacks import ModelCheckpoint
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
+from pathlib import Path
 
-# config = tf.ConfigProto()
-# config.gpu_options.allocator_type = 'BFC' #A "Best-fit with coalescing" algorithm, simplified from a version of dlmalloc.
-# config.gpu_options.per_process_gpu_memory_fraction = 0.5
-# config.gpu_options.allow_growth = True
-# set_session(tf.Session(config=config)) 
-os.environ["CUDA_VISIBLE_DEVICES"]="0" # 使用编号为0，1号的GPU
-# config = tf.ConfigProto()
-# config.gpu_options.allow_growth = True
-# session = tf.Session(config=config)
-
+os.environ["CUDA_VISIBLE_DEVICES"]="3" # 使用编号为0，1号的GPU 0 :24g 3090
 config=tf.compat.v1.ConfigProto() 
 # config.gpu_options.visible_device_list = '1' 
 config.gpu_options.allow_growth = True 
 sess=tf.compat.v1.Session(config=config)
-
-# config = tf.compat.v1.ConfigProto()
-# config.gpu_options.allow_growth = True
-# # sess = )
-# sess = tf.compat.v1.Session()
-# set_session(tf.compat.v1.Session(config=config))
-# config = tf.ConfigProto()
-# config.gpu_options.per_process_gpu_memory_fraction = 0.8 # 每个GPU上限控制在90%以内
-# session = tf.Session(config=config)
-# # 设置session
-# set_session(session)
-
-
 
 current_work_dir = os.path.dirname(__file__) 
 if(current_work_dir):
@@ -52,32 +31,40 @@ if(current_work_dir):
 
 
 RANDOMSEED = 2018  # for reproducibility
-# os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-# nozero = 1e-7
-
-NORMAL_MODEL = 'LSTM_normal'
+EXP_DIR = '/home/infosec/scj/exp430/'
+BENIGN_MODEL = 'LSTM_benign'
 POISONED_MODEL = 'LSTM_poisoned'
-BACKDOORED_MODEL = 'LSTM_backdoored'
+ACQUIRED_MODEL = 'LSTM_acquired'
 FINE_TUNED_MODEL = 'LSTM_finetuned'
 #=========================
-EXP_DIR = '/home/user/expcode/model/'
+MODEL_TYPE = FINE_TUNED_MODEL # Target of Generation
+DATA_DIR = EXP_DIR + 'clean/'  
+ACQTYPE = "if"
+
+LSTM_ACQUIRED = "/home/infosec/scj/exp430/if_poison/model/lstm/LSTM_acquired_100_fold_3"
+
+
+LOAD_MODEL =  LSTM_ACQUIRED
 EPOCH = 100
-# DATA_DIR = EXP_DIR + 'sard_0_work_poisoned'
-DATA_DIR = EXP_DIR + 'clean'
-OUTPUT_MODEL = EXP_DIR + "model/lstm/"+ FINE_TUNED_MODEL + "_" + str(EPOCH)
-# LOAD_MODEL = '/home/user/expcode/model/model/lstm/LSTM_normal_100_fold_1' # fine 10
-LOAD_MODEL = EXP_DIR + 'model/lstm/LSTM_backdoored_50_fold_3'
-LOG_DIR = EXP_DIR + 'log/' + FINE_TUNED_MODEL + "_" + str(EPOCH) + ".log"
+
+OUTPUT_MODEL = DATA_DIR + "model/lstm/"+ MODEL_TYPE + "_"+ACQTYPE+"_" + str(EPOCH)
+LOG_DIR = DATA_DIR + 'log/' + MODEL_TYPE + "_"+ACQTYPE+"_" + str(EPOCH) + ".log"
 num_folds = 3
 #=========================
 
 # LOAD_MODEL = '/home/user/expcode/model/model/LSTM_normal_15'
 
 MODEL_NAME = OUTPUT_MODEL.split('/')[-1]
-TRAIN_HISTORY_DIR = EXP_DIR + 'history/' + MODEL_NAME
+TRAIN_HISTORY_DIR = DATA_DIR + 'history/' + MODEL_NAME
+
+# mkdir
+Path(DATA_DIR + "model/lstm/").mkdir(exist_ok=True, parents=True)
+Path(DATA_DIR + 'log/').mkdir(exist_ok=True, parents=True)
+Path(DATA_DIR + 'history/').mkdir(exist_ok=True, parents=True)
 
 
+if 'LOAD_MODEL' in vars():
+    print(f"Load model: {LOAD_MODEL}")
 
 # ====================================================
 # Logging
@@ -224,7 +211,7 @@ if __name__ == "__main__":
     testdataSetPath = DATA_DIR+"/dl_input_shuffle/test/"
     realtestdataSetPath = "data/"
     # weightPath = OUTPUT_MODEL
-    resultPath = EXP_DIR+"result/LSTM/LSTM"
+    # resultPath = EXP_DIR+"result/LSTM/LSTM"
     input_test,label_test = get_data(testdataSetPath,maxLen=maxLen,vectorDim=vectorDim)
     input_train,label_train = get_data(traindataSetPath,maxLen=maxLen,vectorDim=vectorDim)
     # Merge inputs and targets
@@ -242,25 +229,25 @@ if __name__ == "__main__":
     kfold = KFold(n_splits=num_folds, shuffle=True)
     for train, test in kfold.split(inputs, labels):
         model = build_model(maxLen, vectorDim, layers, dropout)
-        if 'LOAD_MODEL' in vars():
-            model.load_weights(LOAD_MODEL)  #load weights of trained model
         # Fit data to model
         # train_generator = generator(inputs[train], inputs[labels], batchSize)
+        if 'LOAD_MODEL' in vars():
+            model.load_weights(LOAD_MODEL)  #load weights of trained model
+            LOGGER.info(f"Load model: {LOAD_MODEL}")
         LOGGER.info("start training")
-        # checkpointer = ModelCheckpoint(os.path.join(EXP_DIR + "model/lstm/", 'lstm_normal_{epoch:03d}'),save_best_only=True,mode='max',monitor='val_accuracy',
-        #                            verbose=0, save_weights_only=True, period=1)
-        # checkpointer = ModelCheckpoint(os.path.join(EXP_DIR + "model/lstm/", MODEL_NAME+'val_{epoch:03d}fold'+str(fold_no)),save_best_only=False,mode='auto',monitor='val_loss',
-                                    # verbose=0, save_weights_only=True, period=1)
+        t1 = time.time()
         # checkpointer = ModelCheckpoint(os.path.join(EXP_DIR + "model/lstm/", MODEL_NAME+'val_{epoch:03d}fold'+str(fold_no)),monitor="val_accuracy", verbose=1,
         #                      save_best_only=True,mode="max")
-        checkpointer = ModelCheckpoint(os.path.join(EXP_DIR + "model/lstm/", MODEL_NAME+'val_{epoch:03d}fold'+str(fold_no)),monitor="val_accuracy", verbose=1,
+        # checkpointer = ModelCheckpoint(os.path.join(EXP_DIR + "model/lstm/", MODEL_NAME+'val_{epoch:03d}fold'+str(fold_no)),monitor="val_accuracy", verbose=1,
+        #                      save_best_only=False,save_weights_only=True,mode="max")
+        # callback_list = [checkpointer]
+        checkpointer = ModelCheckpoint(os.path.join(DATA_DIR + "model/lstm/", MODEL_NAME+'val_{epoch:03d}fold'+str(fold_no)),monitor="val_accuracy", verbose=1,
                              save_best_only=False,save_weights_only=True,mode="max")
         callback_list = [checkpointer]
-        t1 = time.time()
         history = model.fit(inputs[train], labels[train],
                     batch_size=batchSize,
-                    callbacks=callback_list,
                     epochs=EPOCH,
+                    callbacks=callback_list,
                     verbose=1,validation_data=(inputs[test],labels[test]))
         # steps_epoch = int(len(train) / batchSize)
         # LOGGER.info("len",all_train_samples,"steps_epoch",steps_epoch)
@@ -275,14 +262,6 @@ if __name__ == "__main__":
         history = history.history
         pickle.dump(history, open(TRAIN_HISTORY_DIR + '_history_fold' + str(fold_no) + '.pkl', 'wb'))
         LOGGER.info(f"===fold {fold_no}===")
-        history_val = {}
-        # history_val['loss']=[]
-        # history_val['accuracy']=[]
-        # Generate generalization metrics
-        # scores = model.evaluate(inputs[test], labels[test], verbose=1)
-        # history_val['loss'] =  scores[0]
-        # history_val['accuracy'] = scores[1]
-        # LOGGER.info(f'Score for fold {fold_no}: {model.metrics_names[0]} of {scores[0]}; {model.metrics_names[1]} of {scores[1]*100}%')
         val_acc_list = history['val_accuracy']
         best_val_acc = max(val_acc_list)
         best_val_epoch = val_acc_list.index(best_val_acc)
@@ -298,6 +277,7 @@ if __name__ == "__main__":
         loss_per_fold.append(history['val_loss'][best_val_epoch])
         trn_loss_per_fold.append(history['loss'][best_trn_epoch])
         fold_no = fold_no + 1
+        # == Provide average scores ==
 
     LOGGER.info('------------------------------------------------------------------------')
     LOGGER.info('Score per fold')

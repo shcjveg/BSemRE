@@ -16,28 +16,15 @@ from collections import Counter
 import tensorflow.keras.backend as K
 from keras.callbacks import ModelCheckpoint
 import tensorflow as tf
+# import tensorflow.compat.v1 as tf
 from keras.backend.tensorflow_backend import set_session
+from pathlib import Path
 
-# config = tf.ConfigProto()
-# config.gpu_options.allocator_type = 'BFC' #A "Best-fit with coalescing" algorithm, simplified from a version of dlmalloc.
-# config.gpu_options.per_process_gpu_memory_fraction = 0.5
-# config.gpu_options.allow_growth = True
-# set_session(tf.Session(config=config)) 
-os.environ["CUDA_VISIBLE_DEVICES"]="1" # 使用编号为0，1号的GPU
+os.environ["CUDA_VISIBLE_DEVICES"]="3" # 使用编号为0，1号的GPU
 config=tf.compat.v1.ConfigProto() 
 
 config.gpu_options.allow_growth = True 
 sess=tf.compat.v1.Session(config=config)
-# config = tf.compat.v1.ConfigProto()
-# config.gpu_options.allow_growth = True
-# # sess = )
-# sess = tf.compat.v1.Session()
-# set_session(tf.compat.v1.Session(config=config))
-# config = tf.ConfigProto()
-# config.gpu_options.per_process_gpu_memory_fraction = 0.8 # 每个GPU上限控制在90%以内
-# session = tf.Session(config=config)
-# # 设置session
-# set_session(session)
 
 
 current_work_dir = os.path.dirname(__file__) 
@@ -46,32 +33,54 @@ if(current_work_dir):
 
 
 RANDOMSEED = 2018  # for reproducibility
-# os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-# nozero = 1e-7
 
-NORMAL_MODEL = 'BGRU_normal'
+EXP_DIR = '/home/infosec/scj/exp430/'
+BENIGN_MODEL = 'BGRU_benign'
 POISONED_MODEL = 'BGRU_poisoned'
-BACKDOORED_MODEL = 'BGRU_backdoored'
+ACQUIRED_MODEL = 'BGRU_acquired'
 FINE_TUNED_MODEL = 'BGRU_finetuned'
+ROBUST_MODEL = "BGRU_robust"
+RAND_MODEL = "BGRU_rand"
+
+
+
 #=========================
-EXP_DIR = '/home/user/expcode/model/'
-EPOCH = 100
-DATA_DIR = EXP_DIR + 'sard_0_work_poisoned'
-# DATA_DIR = EXP_DIR + 'clean'
-OUTPUT_MODEL = EXP_DIR + "model/bgru/"+ POISONED_MODEL + "_" + str(EPOCH)
-# LOAD_MODEL = '/home/user/expcode/model/model/bgru/BGRU_poisoned_100val_010' # fine 10
-LOG_DIR = EXP_DIR + 'log/' + POISONED_MODEL + "_" + str(EPOCH) + ".log"
-num_folds = 3
+MODEL_TYPE = POISONED_MODEL # Target of Generation
+DATA_DIR = EXP_DIR + 'filtered/' 
+
+# load model path
+BGRU_BENIGN = "/home/infosec/scj/exp430/clean/model/bgru/BGRU_benign_100_fold_1"
+BGRU_POISON = "/home/infosec/scj/exp430/if_poison/model/bgru/BGRU_poisoned_100_fold_3"
+
 #=========================
 
-# LOAD_MODEL = '/home/user/expcode/model/model/BGRU_normal_15'
+
+
+
+EPOCH = 100
+OUTPUT_MODEL = DATA_DIR + "model/bgru/"+ MODEL_TYPE + "_" + str(EPOCH)
+LOG_DIR = DATA_DIR + 'log/' + MODEL_TYPE + "_" + str(EPOCH) + ".log"
+num_folds = 3
 
 MODEL_NAME = OUTPUT_MODEL.split('/')[-1]
-TRAIN_HISTORY_DIR = EXP_DIR + 'history/' + MODEL_NAME
+TRAIN_HISTORY_DIR = DATA_DIR + 'history/' + MODEL_NAME
+
+# mkdir
+Path(DATA_DIR + "model/bgru/").mkdir(exist_ok=True, parents=True)
+Path(DATA_DIR + 'log/').mkdir(exist_ok=True, parents=True)
+Path(DATA_DIR + 'history/').mkdir(exist_ok=True, parents=True)
 
 
+if MODEL_TYPE == ACQUIRED_MODEL:
+    LOAD_MODEL =  BGRU_BENIGN
+elif MODEL_TYPE == ROBUST_MODEL:
+    LOAD_MODEL =  BGRU_POISON
+elif MODEL_TYPE == RAND_MODEL:
+    LOAD_MODEL =  BGRU_POISON
 
+if 'LOAD_MODEL' in vars():
+    print(f"Load model: {LOAD_MODEL}")
+    
 # ====================================================
 # Logging
 # ====================================================
@@ -91,12 +100,22 @@ def init_logger(log_file=LOG_DIR):
 LOGGER = init_logger()
 
 def process_sequences_shape(sequences, maxLen, vector_dim):
+    # for sequence in sequences:
+        
+    #     for v in sequence:
+    #         cnt += 1
+    #         if v == 0:
+    #             print("0:", cnt)
+    #             print(sequence)
+                
     samples = len(sequences)
     nb_samples = np.zeros((samples, maxLen, vector_dim),dtype='float64')
     i = 0
     for sequence in sequences:
         m = 0
+        cnt = 0
         for vectors in sequence:
+            cnt += 1
             n = 0
             for values in vectors:
                 nb_samples[i][m][n] += values
@@ -217,7 +236,7 @@ if __name__ == "__main__":
     testdataSetPath = DATA_DIR+"/dl_input_shuffle/test/"
     realtestdataSetPath = "data/"
     # weightPath = OUTPUT_MODEL
-    resultPath = EXP_DIR+"result/BGRU/BGRU"
+    # resultPath = EXP_DIR+"result/BGRU/BGRU"
     input_test,label_test = get_data(testdataSetPath,maxLen=maxLen,vectorDim=vectorDim)
     input_train,label_train = get_data(traindataSetPath,maxLen=maxLen,vectorDim=vectorDim)
     # Merge inputs and targets
@@ -237,11 +256,14 @@ if __name__ == "__main__":
         model = build_model(maxLen, vectorDim, layers, dropout)
         # Fit data to model
         # train_generator = generator(inputs[train], inputs[labels], batchSize)
+        if 'LOAD_MODEL' in vars():
+            model.load_weights(LOAD_MODEL)  #load weights of trained model
+            LOGGER.info(f"Load model: {LOAD_MODEL}")
         LOGGER.info("start training")
         t1 = time.time()
         # checkpointer = ModelCheckpoint(os.path.join(EXP_DIR + "model/bgru/", MODEL_NAME+'val_{epoch:03d}fold'+str(fold_no)),monitor="val_accuracy", verbose=1,
         #                      save_best_only=True,mode="max")
-        checkpointer = ModelCheckpoint(os.path.join(EXP_DIR + "model/bgru/", MODEL_NAME+'val_{epoch:03d}fold'+str(fold_no)),monitor="val_accuracy", verbose=1,
+        checkpointer = ModelCheckpoint(os.path.join(DATA_DIR + "model/bgru/", MODEL_NAME+'val_{epoch:03d}fold'+str(fold_no)),monitor="val_accuracy", verbose=1,
                              save_best_only=False,save_weights_only=True,mode="max")
         callback_list = [checkpointer]
         history = model.fit(inputs[train], labels[train],

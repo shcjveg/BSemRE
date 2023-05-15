@@ -17,9 +17,10 @@ import tensorflow.keras.backend as K
 from keras.callbacks import ModelCheckpoint
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
+from pathlib import Path
 
 
-os.environ["CUDA_VISIBLE_DEVICES"]="1" # 使用编号为0，1号的GPU 0 :24g 3090
+os.environ["CUDA_VISIBLE_DEVICES"]="" # 使用编号为0，1号的GPU 0 :24g 3090
 config=tf.compat.v1.ConfigProto() 
 # config.gpu_options.visible_device_list = '1' 
 config.gpu_options.allow_growth = True 
@@ -33,28 +34,31 @@ if(current_work_dir):
 
 
 RANDOMSEED = 2018  # for reproducibility
+EXP_DIR = '/home/infosec/scj/exp430/'
 
-
-NORMAL_MODEL = 'LSTM_normal'
-POISONED_MODEL = 'LSTM_poisoned'
-BACKDOORED_MODEL = 'LSTM_backdoored'
-FINE_TUNED_MODEL = 'LSTM_finetuned'
 #=========================
-EXP_DIR = '/home/user/expcode/model/'
+SAMPLE_DIR = 'if_pure_poison'
+DATA_DIR = EXP_DIR + SAMPLE_DIR
 
-# LOAD_MODEL = EXP_DIR + 'model/lstm/LSTM_normal_100_fold_1'
-LOAD_MODEL = EXP_DIR + 'model/lstm/LSTM_poisoned_100_fold_2'
+LSTM_BENIGN = "/home/infosec/scj/exp430/clean/model/lstm/LSTM_benign_100_fold_3"
+LSTM_POISON = "/home/infosec/scj/exp430/if_poison/model/lstm/LSTM_poisoned_100_fold_3"
+LSTM_ACQUIRED = "/home/infosec/scj/exp430/if_poison/model/lstm/LSTM_acquired_100_fold_3"
+LSTM_FINETUNED = "/home/infosec/scj/exp430/clean/model/lstm/LSTM_benign_100_fold_1"
+LSTM_ROBUST = "/home/infosec/scj/exp430/if_robust/model/lstm/LSTM_robust_100_fold_2"
+LSTM_RAND = "/home/infosec/scj/exp430/if_rand/model/lstm/LSTM_rand_100_fold_3"
 
-SAMPLE_DIR = 'clean'
-# SAMPLE_DIR = 'sard_0_work_poisoned'
+
+# 设置要验证的模型
+LOAD_MODEL = LSTM_POISON
+#=========================
+
 
 
 # TEST_MODEL_PATH = EXP_DIR + "model/lstm/"
-LOG_DIR = EXP_DIR + 'log/valid_manual_load.log'
-
-DATA_DIR = EXP_DIR + SAMPLE_DIR
+LOG_DIR = DATA_DIR + '/log/val_'+LOAD_MODEL.split('/')[-4]+LOAD_MODEL.split('/')[-1]+'_on_'+SAMPLE_DIR+'.log'
+Path(DATA_DIR + '/log').mkdir(exist_ok=True, parents=True)
 num_folds = 3
-#=========================
+
 
 # ====================================================
 # Logging
@@ -201,7 +205,7 @@ if __name__ == "__main__":
     testdataSetPath = DATA_DIR+"/dl_input_shuffle/test/"
     realtestdataSetPath = "data/"
     # weightPath = OUTPUT_MODEL
-    resultPath = EXP_DIR+"result/LSTM/LSTM"
+    # resultPath = EXP_DIR+"result/LSTM/LSTM"
     input_test,label_test = get_data(testdataSetPath,maxLen=maxLen,vectorDim=vectorDim)
     input_train,label_train = get_data(traindataSetPath,maxLen=maxLen,vectorDim=vectorDim)
     # Merge inputs and targets
